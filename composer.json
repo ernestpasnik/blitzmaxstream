@@ -1,8 +1,12 @@
 {
     "name": "ernestpasnik/blitzmaxstream",
     "description": "A handy tool for working with binary data used in BlitzMax",
+    "keywords": ["php", "blitzmax"],
+    "license": "MIT",
     "require": {
         "php": ">=7.2"
     },
-    "license": "MIT"
+    "autoload": {
+        "classmap": ["src/"]
+    }
 }
