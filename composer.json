@@ -1,0 +1,8 @@
+{
+    "name": "ernestpasnik/blitzmaxstream",
+    "description": "A handy tool for working with binary data used in BlitzMax",
+    "require": {
+        "php": ">=7.2"
+    },
+    "license": "MIT"
+}
