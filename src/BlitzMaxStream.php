@@ -1,267 +1,221 @@
 <?php
+declare(strict_types=1);
 
 class BlitzMaxStream
 {
-    private $offset;
-    private $buffer;
-    private $length;
-    private $endianness;
+    private int $offset = 0;
+    private string $buffer;
+    private int $length;
+    private int $endianness;
 
-    const LITTLE_ENDIAN = 0;
-    const BIG_ENDIAN = 1;
+    public const LITTLE_ENDIAN = 0;
+    public const BIG_ENDIAN = 1;
 
-    public function __construct($buff = null, $endianness = self::LITTLE_ENDIAN)
+    public function __construct(string $buffer = '', int $endianness = self::LITTLE_ENDIAN)
     {
-        $this->offset = 0;
-        if ($buff !== null) {
-            $this->buffer = $buff;
-            $this->length = strlen($buff);
-        } else {
-            $this->buffer = '';
-            $this->length = 0;
-        }
+        $this->buffer     = $buffer;
+        $this->length     = strlen($buffer);
         $this->endianness = $endianness;
     }
 
-    public function readByte($offset = null)
+    private function applyOffset(?int $offset): void
     {
         if ($offset !== null) {
             $this->offset += $offset;
         }
-        $value = ord($this->buffer[$this->offset]);
-        $this->offset += 1;
+    }
+
+    private function ensureReadable(int $bytes): void
+    {
+        if ($this->offset + $bytes > $this->length) {
+            throw new \RuntimeException("Attempt to read past end of buffer at offset {$this->offset}");
+        }
+    }
+
+    private function readUnpack(string $format, int $size, ?int $offset = null): int|float
+    {
+        $this->applyOffset($offset);
+        $this->ensureReadable($size);
+        $value = unpack($format, substr($this->buffer, $this->offset, $size))[1];
+        $this->offset += $size;
         return $value;
     }
 
-    public function readShort($offset = null)
+    private function writePack(string $format, int $size, int|float $value): self
     {
-        if ($offset !== null) {
-            $this->offset += $offset;
-        }
-        if ($this->endianness === self::LITTLE_ENDIAN) {
-            $value = unpack('v', substr($this->buffer, $this->offset, 2))[1];
-        } else {
-            $value = unpack('n', substr($this->buffer, $this->offset, 2))[1];
-        }
-        $this->offset += 2;
-        return $value;
-    }
-
-    public function readInt($offset = null)
-    {
-        if ($offset !== null) {
-            $this->offset += $offset;
-        }
-        if ($this->endianness === self::LITTLE_ENDIAN) {
-            $value = unpack('V', substr($this->buffer, $this->offset, 4))[1];
-        } else {
-            $value = unpack('N', substr($this->buffer, $this->offset, 4))[1];
-        }
-        $this->offset += 4;
-        return $value;
-    }
-
-    public function readLong($offset = null)
-    {
-        if ($offset !== null) {
-            $this->offset += $offset;
-        }
-        if ($this->endianness === self::LITTLE_ENDIAN) {
-            $value = unpack('P', substr($this->buffer, $this->offset, 8))[1];
-        } else {
-            $value = unpack('J', substr($this->buffer, $this->offset, 8))[1];
-        }
-        $this->offset += 8;
-        return $value;
-    }
-
-    public function readFloat($offset = null)
-    {
-        if ($offset !== null) {
-            $this->offset += $offset;
-        }
-        if ($this->endianness === self::LITTLE_ENDIAN) {
-            $value = unpack('g', substr($this->buffer, $this->offset, 4))[1];
-        } else {
-            $value = unpack('G', substr($this->buffer, $this->offset, 4))[1];
-        }
-        $this->offset += 4;
-        return $value;
-    }
-
-    public function readDouble($offset = null)
-    {
-        if ($offset !== null) {
-            $this->offset += $offset;
-        }
-        if ($this->endianness === self::LITTLE_ENDIAN) {
-            $value = unpack('e', substr($this->buffer, $this->offset, 8))[1];
-        } else {
-            $value = unpack('E', substr($this->buffer, $this->offset, 8))[1];
-        }
-        $this->offset += 8;
-        return $value;
-    }
-
-    public function readLine($offset = null)
-    {
-        if ($offset !== null) {
-            $this->offset += $offset;
-        }
-        $value = '';
-        while (true) {
-            $n = $this->readByte();
-            if ($n === null || $n === 10) {
-                break;
-            } elseif ($n !== 13) {
-                $value .= chr($n);
-            }
-        }
-        return $value;
-    }
-
-    public function readString($length)
-    {
-        $value = substr($this->buffer, $this->offset, $length);
-        $this->offset += $length;
-        return $value;
-    }
-
-    public function readStringNT($length)
-    {
-        $value = $this->readString($length);
-        $this->offset += 1;
-        return $value;
-    }
-
-    public function writeByte($value)
-    {
-        $this->buffer[$this->offset] = chr($value);
-        $this->offset += 1;
-        return $this->buffer;
-    }
-
-    public function writeShort($value)
-    {
-        if ($this->endianness === self::LITTLE_ENDIAN) {
-            $d = pack('v', $value);
-        } else {
-            $d = pack('n', $value);
-        }
-        $this->buffer = substr_replace($this->buffer, $d, $this->offset, 2);
-        $this->offset += 2;
-        return $this->buffer;
-    }
-
-    public function writeInt($value)
-    {
-        if ($this->endianness === self::LITTLE_ENDIAN) {
-            $d = pack('V', $value);
-        } else {
-            $d = pack('N', $value);
-        }
-        $this->buffer = substr_replace($this->buffer, $d, $this->offset, 4);
-        $this->offset += 4;
-        return $this->buffer;
-    }
-
-    public function writeLong($value)
-    {
-        if ($this->endianness === self::LITTLE_ENDIAN) {
-            $d = pack('P', $value);
-        } else {
-            $d = pack('J', $value);
-        }
-        $this->buffer = substr_replace($this->buffer, $d, $this->offset, 8);
-        $this->offset += 8;
-        return $this->buffer;
-    }
-
-    public function writeFloat($value)
-    {
-        if ($this->endianness === self::LITTLE_ENDIAN) {
-            $d = pack('g', $value);
-        } else {
-            $d = pack('G', $value);
-        }
-        $this->buffer = substr_replace($this->buffer, $d, $this->offset, 4);
-        $this->offset += 4;
-        return $this->buffer;
-    }
-
-    public function writeDouble($value)
-    {
-        if ($this->endianness === self::LITTLE_ENDIAN) {
-            $d = pack('e', $value);
-        } else {
-            $d = pack('E', $value);
-        }
-        $this->buffer = substr_replace($this->buffer, $d, $this->offset, 8);
-        $this->offset += 8;
-        return $this->buffer;
-    }
-
-    public function writeLine($value)
-    {
-        $length = strlen($value);
-        for ($i = 0; $i < $length; $i++) {
-            $this->buffer[$this->offset + $i] = $value[$i];
-        }
-        $this->offset += $length;
-        $this->writeByte(13);
-        $this->writeByte(10);
+        $d = pack($format, $value);
+        $this->buffer = substr_replace($this->buffer, $d, $this->offset, $size);
+        $this->offset += $size;
+        $this->length = strlen($this->buffer);
         return $this;
     }
 
-    public function writeString($value)
+    // ---- READERS ----
+    public function readByte(?int $offset = null): int
     {
-        $length = strlen($value);
-        for ($i = 0; $i < $length; $i++) {
-            $this->buffer[$this->offset + $i] = $value[$i];
-        }
-        $this->offset += $length;
-        return $this->buffer;
+        $this->applyOffset($offset);
+        $this->ensureReadable(1);
+        return ord($this->buffer[$this->offset++]);
     }
 
-    public function writeStringNT($value)
+    public function readShort(?int $offset = null): int
+    {
+        return $this->readUnpack(
+            $this->endianness === self::LITTLE_ENDIAN ? 'v' : 'n', 2, $offset
+        );
+    }
+
+    public function readInt(?int $offset = null): int
+    {
+        return $this->readUnpack(
+            $this->endianness === self::LITTLE_ENDIAN ? 'V' : 'N', 4, $offset
+        );
+    }
+
+    public function readLong(?int $offset = null): int
+    {
+        return $this->readUnpack(
+            $this->endianness === self::LITTLE_ENDIAN ? 'P' : 'J', 8, $offset
+        );
+    }
+
+    public function readFloat(?int $offset = null): float
+    {
+        return $this->readUnpack(
+            $this->endianness === self::LITTLE_ENDIAN ? 'g' : 'G', 4, $offset
+        );
+    }
+
+    public function readDouble(?int $offset = null): float
+    {
+        return $this->readUnpack(
+            $this->endianness === self::LITTLE_ENDIAN ? 'e' : 'E', 8, $offset
+        );
+    }
+
+    public function readLine(?int $offset = null): string
+    {
+        $this->applyOffset($offset);
+        $line = '';
+        while ($this->offset < $this->length) {
+            $n = $this->readByte();
+            if ($n === 10) break;      // LF
+            if ($n !== 13) $line .= chr($n); // ignore CR
+        }
+        return $line;
+    }
+
+    public function readString(int $length): string
+    {
+        $this->ensureReadable($length);
+        $str = substr($this->buffer, $this->offset, $length);
+        $this->offset += $length;
+        return $str;
+    }
+
+    /** Read string with null terminator (C-style) */
+    public function readStringNT(int $length): string
+    {
+        $str = $this->readString($length);
+        $this->offset++; // skip null terminator
+        return $str;
+    }
+
+    // ---- WRITERS ----
+    public function writeByte(int $value): self
+    {
+        $this->buffer[$this->offset++] = chr($value & 0xFF);
+        $this->length = max($this->length, $this->offset);
+        return $this;
+    }
+
+    public function writeShort(int $value): self
+    {
+        return $this->writePack(
+            $this->endianness === self::LITTLE_ENDIAN ? 'v' : 'n', 2, $value
+        );
+    }
+
+    public function writeInt(int $value): self
+    {
+        return $this->writePack(
+            $this->endianness === self::LITTLE_ENDIAN ? 'V' : 'N', 4, $value
+        );
+    }
+
+    public function writeLong(int $value): self
+    {
+        return $this->writePack(
+            $this->endianness === self::LITTLE_ENDIAN ? 'P' : 'J', 8, $value
+        );
+    }
+
+    public function writeFloat(float $value): self
+    {
+        return $this->writePack(
+            $this->endianness === self::LITTLE_ENDIAN ? 'g' : 'G', 4, $value
+        );
+    }
+
+    public function writeDouble(float $value): self
+    {
+        return $this->writePack(
+            $this->endianness === self::LITTLE_ENDIAN ? 'e' : 'E', 8, $value
+        );
+    }
+
+    public function writeLine(string $value): self
     {
         $this->writeString($value);
-        $this->writeByte(0);
-        return $this->buffer;
+        return $this->writeByte(13)->writeByte(10);
     }
 
-    public function setPosition($position)
+    public function writeString(string $value): self
     {
-        $this->offset = $position;
+        $len = strlen($value);
+        $this->buffer = substr_replace($this->buffer, $value, $this->offset, $len);
+        $this->offset += $len;
+        $this->length = strlen($this->buffer);
+        return $this;
     }
 
-    public function skipBytes($count)
+    public function writeStringNT(string $value): self
+    {
+        return $this->writeString($value)->writeByte(0);
+    }
+
+    // ---- UTILITIES ----
+    public function setPosition(int $position): void
+    {
+        $this->offset = max(0, $position);
+    }
+
+    public function skipBytes(int $count): void
     {
         $this->offset += $count;
-        return $this->offset;
     }
 
-    public function remaining()
+    public function remaining(): int
     {
         return $this->length - $this->offset;
     }
 
-    public function close()
+    public function close(): string
     {
         return substr($this->buffer, 0, $this->offset);
     }
 
-    public function position()
+    public function position(): int
     {
         return $this->offset;
     }
 
-    public function size()
+    public function size(): int
     {
         return $this->length;
     }
 
-    public function clear()
+    public function clear(): void
     {
         $this->offset = 0;
         $this->buffer = '';
