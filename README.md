@@ -74,22 +74,17 @@ composer require ernestpasnik/blitzmaxstream
 <?php
 require_once 'vendor/autoload.php';
 
-// Create stream and write some data
-$stream = new BlitzMaxStream();
-$stream->writeInt(42);
-$stream->writeStringNT("Hello World");
-$stream->writeFloat(3.14);
-
-// Save to file
-file_put_contents('data.bin', $stream->close());
+// Create buffer and write some data
+$buf = new BlitzMaxStream();
+$buf->writeInt(123)
+    ->writeStringNT("Hello BlitzMax")
+    ->writeFloat(9.81);
 
 // Read data back
-$data = file_get_contents('data.bin');
-$buffer = new BlitzMaxStream($data);
-
-echo $buffer->readInt() . PHP_EOL;       // 42
-echo $buffer->readStringNT(20) . PHP_EOL; // Hello World
-echo $buffer->readFloat() . PHP_EOL;     // 3.14
+$s = new BlitzMaxStream($buf->close());
+echo $s->readInt(), "\n";          // 123
+echo $s->readStringNT(50), "\n";   // Hello BlitzMax
+echo $s->readFloat(), "\n";        // 9.81
 ```
 
 ---
