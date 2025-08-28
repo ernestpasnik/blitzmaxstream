@@ -1,30 +1,14 @@
 {
     "name": "ernestpasnik/blitzmaxstream",
-    "description": "A lightweight PHP library for reading and writing binary data, inspired by BlitzMax.",
-    "keywords": ["php", "binary", "stream", "blitzmax", "data"],
-    "license": "MIT",
+    "description": "Lightweight PHP library for reading and writing binary data, inspired by BlitzMax.",
     "type": "library",
+    "license": "MIT",
     "require": {
         "php": ">=8.0"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^10.0"
     },
     "autoload": {
         "psr-4": {
             "BlitzMaxStream\\": "src/"
         }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "BlitzMaxStream\\Tests\\": "tests/"
-        }
-    },
-    "minimum-stability": "stable",
-    "prefer-stable": true,
-    "authors": [
-        {
-            "name": "Ernest Paśnik"
-        }
-    ]
+    }
 }
