@@ -1,6 +1,6 @@
 # BlitzMax Stream
 
-A PHP library for reading and writing binary data, inspired by [BlitzMax](https://blitzmax.org/docs/en/language/data_types/). Useful for working with binary file formats, including map files for CS2D.
+A lightweight PHP library for **reading and writing binary data**, inspired by [BlitzMax](https://blitzmax.org/docs/en/language/data_types/). Ideal for working with **custom binary file formats** or any project that requires efficient binary streams.
 
 ---
 
@@ -16,9 +16,9 @@ composer require ernestpasnik/blitzmaxstream
 
 ## Features
 
-* Read/write integers, floats, doubles, bytes, strings, and lines.
+* Read and write integers, floats, doubles, bytes, strings, and lines.
 * Supports **little-endian** and **big-endian** formats.
-* Safe buffer management with offset checking.
+* Safe buffer management with automatic offset checking.
 * Null-terminated string support (C-style strings).
 * Stream utilities: skip bytes, seek position, check remaining bytes, clear buffer.
 
@@ -38,7 +38,7 @@ composer require ernestpasnik/blitzmaxstream
 | `readDouble($offset = null)` | Reads a 64-bit float (double).                                           |
 | `readLine($offset = null)`   | Reads until a newline character (`\n`), ignoring carriage return (`\r`). |
 | `readString($length)`        | Reads a string of fixed length.                                          |
-| `readStringNT($length)`      | Reads a null-terminated string of given length, skips the null byte.     |
+| `readStringNT($length)`      | Reads a null-terminated string of given length.                          |
 
 ### Writing Data
 
@@ -62,7 +62,7 @@ composer require ernestpasnik/blitzmaxstream
 | `skipBytes($count)`      | Skips a number of bytes.                     |
 | `position()`             | Returns the current offset.                  |
 | `remaining()`            | Returns the number of bytes left to read.    |
-| `size()`                 | Returns total buffer size.                   |
+| `size()`                 | Returns the total buffer size.               |
 | `close()`                | Returns the buffer up to the current offset. |
 | `clear()`                | Clears and resets the buffer.                |
 
@@ -74,13 +74,11 @@ composer require ernestpasnik/blitzmaxstream
 <?php
 require_once 'vendor/autoload.php';
 
-// Create buffer and write some data
 $buf = new BlitzMaxStream();
 $buf->writeInt(123)
     ->writeStringNT("Hello BlitzMax")
     ->writeFloat(9.81);
 
-// Read data back
 $s = new BlitzMaxStream($buf->close());
 echo $s->readInt(), "\n";          // 123
 echo $s->readStringNT(50), "\n";   // Hello BlitzMax
