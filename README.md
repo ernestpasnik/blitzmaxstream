@@ -70,43 +70,26 @@ composer require ernestpasnik/blitzmaxstream
 
 ## Usage Example
 
-Reading a CS2D map file:
-
 ```php
 <?php
 require_once 'vendor/autoload.php';
 
-$mapData = file_get_contents('de_dust2.map');
-$buffer = new BlitzMaxStream($mapData);
+// Create stream and write some data
+$stream = new BlitzMaxStream();
+$stream->writeInt(42);
+$stream->writeStringNT("Hello World");
+$stream->writeFloat(3.14);
 
-$header = [];
-$header['header'] = $buffer->readLine();
-$header['scrollMap'] = $buffer->readByte();
-$header['useModifiers'] = $buffer->readByte();
-$header['saveTileHeights'] = $buffer->readByte();
-$header['use64pxTiles'] = $buffer->readByte();
-$buffer->skipBytes(6);
-$header['sysUptime'] = $buffer->readInt();
-$header['authorUSGN'] = $buffer->readInt();
-$header['daylightTime'] = $buffer->readInt();
-$buffer->skipBytes(28);
-$header['authorName'] = $buffer->readLine();
-$header['programUsed'] = $buffer->readLine();
-$buffer->skipBytes(16);
-$header['infoString'] = $buffer->readLine();
-$header['tilesetImage'] = $buffer->readLine();
-$header['tileCount'] = $buffer->readByte();
-$header['mapWidth'] = $buffer->readInt();
-$header['mapHeight'] = $buffer->readInt();
-$header['backgroundImage'] = $buffer->readLine();
-$header['bgScrollX'] = $buffer->readInt();
-$header['bgScrollY'] = $buffer->readInt();
-$header['bgColorRed'] = $buffer->readByte();
-$header['bgColorGreen'] = $buffer->readByte();
-$header['bgColorBlue'] = $buffer->readByte();
-$header['headerTest'] = $buffer->readLine();
+// Save to file
+file_put_contents('data.bin', $stream->close());
 
-print_r($header);
+// Read data back
+$data = file_get_contents('data.bin');
+$buffer = new BlitzMaxStream($data);
+
+echo $buffer->readInt() . PHP_EOL;       // 42
+echo $buffer->readStringNT(20) . PHP_EOL; // Hello World
+echo $buffer->readFloat() . PHP_EOL;     // 3.14
 ```
 
 ---
